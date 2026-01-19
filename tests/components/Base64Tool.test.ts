@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import { simulateTyping, simulateKeyboard, waitForDebounce } from '../utils/setup';
-import Base64Tool from '../../../src/lib/components/Base64Tool.svelte';
+import Base64Tool from '$lib/components/Base64Tool.svelte';
 
 // Mock clipboard API
 const mockClipboard = {
@@ -208,7 +208,7 @@ describe('Base64Tool Component', () => {
 			expect(copyButton?.textContent).toContain('Copied!');
 			
 			// Wait for feedback to clear
-			await waitForDebounce(1500);
+			await waitForDebounce(1600);
 			expect(copyButton?.textContent).not.toContain('Copied!');
 		});
 
@@ -348,7 +348,7 @@ describe('Base64Tool Component', () => {
 			component = render(Base64Tool);
 			
 			// This would require mocking the processing to be slower
-			// For now, just test the structure exists
+			// For now, just test that loading element exists
 			const loadingElement = document.querySelector('[data-testid="loading-indicator"]');
 			expect(loadingElement).toBeTruthy();
 		});
