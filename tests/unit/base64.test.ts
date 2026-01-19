@@ -23,8 +23,8 @@ describe('Base64 Encoding/Decoding', () => {
 
 		it('should handle Unicode characters', () => {
 			expect(encodeBase64('小飼弾')).toBe('5bCP6aO85by+');
-			expect(encodeBase64('👍')).toBe('8J+Riw==');
-			expect(encodeBase64('hello 🌍')).toBe('aGVsbG8gIPCfjZ4=');
+			expect(encodeBase64('👍')).toBe('8J+RjQ==');
+			expect(encodeBase64('hello 🌍')).toBe('aGVsbG8g8J+MjQ==');
 		});
 
 		it('should handle special characters', () => {
@@ -46,12 +46,12 @@ describe('Base64 Encoding/Decoding', () => {
 
 		it('should handle mixed content', () => {
 			const input = 'Hello, 世界! 123\n\tTest';
-			expect(encodeBase64(input)).toBe('SGVsbG8sIOeSruWNlSEgMTIzCglUZXN0');
+			expect(encodeBase64(input)).toBe('SGVsbG8sIOS4lueVjCEgMTIzCglUZXN0');
 		});
 
 		it('should be consistent with built-in btoa for ASCII', () => {
 			const testStrings = ['hello', 'world', 'test', '12345', 'abcxyz'];
-			testStrings.forEach(str => {
+			testStrings.forEach((str) => {
 				// Note: btoa only handles ASCII, so test only ASCII strings
 				if (/^[\x00-\x7F]*$/.test(str)) {
 					expect(encodeBase64(str)).toBe(btoa(str));
@@ -78,8 +78,8 @@ describe('Base64 Encoding/Decoding', () => {
 
 		it('should handle Unicode characters', () => {
 			expect(decodeBase64('5bCP6aO85by+')).toBe('小飼弾');
-			expect(decodeBase64('8J+Riw==')).toBe('👍');
-			expect(decodeBase64('aGVsbG8gIPCfjZ4=')).toBe('hello 🌍');
+			expect(decodeBase64('8J+RjQ==')).toBe('👍');
+			expect(decodeBase64('aGVsbG8g8J+MjQ==')).toBe('hello 🌍');
 		});
 
 		it('should handle special characters', () => {
@@ -100,13 +100,13 @@ describe('Base64 Encoding/Decoding', () => {
 		});
 
 		it('should handle mixed content', () => {
-			const encoded = 'SGVsbG8sIOeSruWNlSEgMTIzCglUZXN0';
+			const encoded = 'SGVsbG8sIOS4lueVjCEgMTIzCglUZXN0';
 			expect(decodeBase64(encoded)).toBe('Hello, 世界! 123\n\tTest');
 		});
 
 		it('should be consistent with built-in atob for ASCII', () => {
 			const testStrings = ['aGVsbG8=', 'd29ybGQ=', 'dGVzdA==', 'MTIz', 'YWJjeHl6'];
-			testStrings.forEach(str => {
+			testStrings.forEach((str) => {
 				try {
 					expect(decodeBase64(str)).toBe(atob(str));
 				} catch (error) {
@@ -129,10 +129,10 @@ describe('Base64 Encoding/Decoding', () => {
 				'小飼弾',
 				'Hello, 世界! 123\n\tTest',
 				'JSON: {"key": "value", "number": 42}',
-				'URL: https://example.com/path?query=value#fragment'
+				'URL: https://example.com/path?query=value#fragment',
 			];
 
-			testCases.forEach(input => {
+			testCases.forEach((input) => {
 				const encoded = encodeBase64(input);
 				const decoded = decodeBase64(encoded);
 				expect(decoded).toBe(input);
@@ -142,13 +142,13 @@ describe('Base64 Encoding/Decoding', () => {
 		it('should handle large text efficiently', () => {
 			const largeText = 'A'.repeat(10000);
 			const startTime = performance.now();
-			
+
 			const encoded = encodeBase64(largeText);
 			const encodedTime = performance.now();
-			
+
 			const decoded = decodeBase64(encoded);
 			const decodedTime = performance.now();
-			
+
 			expect(decoded).toBe(largeText);
 			expect(encodedTime - startTime).toBeLessThan(100); // Should encode in <100ms
 			expect(decodedTime - encodedTime).toBeLessThan(100); // Should decode in <100ms
@@ -162,10 +162,10 @@ describe('Base64 Encoding/Decoding', () => {
 				'===', // Too many padding characters
 				'abc', // Invalid length
 				'aGVsbG8', // Missing padding
-				'YWJjZWZnaA===' // Too much padding
+				'YWJjZWZnaA===', // Too much padding
 			];
 
-			invalidInputs.forEach(input => {
+			invalidInputs.forEach((input) => {
 				expect(() => decodeBase64(input)).toThrow();
 			});
 		});
@@ -187,7 +187,10 @@ describe('Base64 Encoding/Decoding', () => {
 
 	describe('Edge Cases', () => {
 		it('should handle very long strings', () => {
-			const longString = 'This is a very long string that contains many characters and should still work properly with Base64 encoding and decoding. '.repeat(100);
+			const longString =
+				'This is a very long string that contains many characters and should still work properly with Base64 encoding and decoding. '.repeat(
+					100
+				);
 			const encoded = encodeBase64(longString);
 			const decoded = decodeBase64(encoded);
 			expect(decoded).toBe(longString);
