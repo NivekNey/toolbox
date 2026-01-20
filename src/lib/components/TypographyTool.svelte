@@ -2,13 +2,14 @@
 	import { onDestroy } from 'svelte';
 	import { googleToMarkdown, markdownToHtml } from '$lib/utils/typography';
 	import Editor from './Editor.svelte';
+	import RichEditor from './RichEditor.svelte';
 
-	let plainText = '';
+	let richContent = '';
 	let markdown = '';
 	let isLoading = false;
 	let processingTimeout: number | null = null;
 
-	function syncPlainToMarkdown(source: string) {
+	function syncRichToMarkdown(source: string) {
 		isLoading = true;
 		if (processingTimeout) clearTimeout(processingTimeout);
 
@@ -23,24 +24,24 @@
 		}, 100);
 	}
 
-	function syncMarkdownToPlain() {
+	function syncMarkdownToRich() {
 		isLoading = true;
 		if (processingTimeout) clearTimeout(processingTimeout);
 
 		processingTimeout = window.setTimeout(() => {
-			plainText = markdown;
+			richContent = markdownToHtml(markdown);
 			isLoading = false;
 		}, 100);
 	}
 
-	function handlePlainInput(event: CustomEvent<string>) {
-		plainText = event.detail;
-		syncPlainToMarkdown(plainText);
+	function handleRichInput(event: CustomEvent<string>) {
+		richContent = event.detail;
+		syncRichToMarkdown(richContent);
 	}
 
 	function handleMarkdownInput(event: CustomEvent<string>) {
 		markdown = event.detail;
-		syncMarkdownToPlain();
+		syncMarkdownToRich();
 	}
 
 	async function copyMarkdown() {
@@ -49,14 +50,13 @@
 	}
 
 	async function copyRichText() {
-		if (!markdown) return;
+		if (!richContent) return;
 		try {
-			const htmlContent = markdownToHtml(markdown);
-			const blob = new Blob([htmlContent], { type: 'text/html' });
+			const blob = new Blob([richContent], { type: 'text/html' });
 			const item = new ClipboardItem({ 'text/html': blob });
 			await navigator.clipboard.write([item]);
 		} catch (error) {
-			await navigator.clipboard.writeText(plainText);
+			await navigator.clipboard.writeText(richContent.replace(/<[^>]*>/g, ''));
 		}
 	}
 
@@ -67,8 +67,11 @@
 		
 		if (html && html.includes('<')) {
 			clipboardEvent.preventDefault();
-			plainText = plain || '';
-			syncPlainToMarkdown(html);
+			richContent = html;
+			syncRichToMarkdown(html);
+		} else if (plain) {
+			// If it's just plain text, let the RichEditor handle it normally
+			// or we can manually wrap it if we want to force a sync
 		}
 	}
 
@@ -79,18 +82,18 @@
 
 <div class="space-y-6">
 	<div class="grid md:grid-cols-2 gap-6 items-start">
-		<Editor 
-			label="Plain Text / Google Docs"
+		<RichEditor 
+			label="Rich Text / Google Docs"
 			placeholder="Paste from Google Docs or type here..."
-			bind:value={plainText}
-			on:input={handlePlainInput}
+			bind:value={richContent}
+			on:input={handleRichInput}
 			on:paste={handlePaste}
 			dataTestId="plain-editor"
 		>
 			<div slot="actions">
 				<button class="btn btn-ghost btn-xs text-muted-foreground hover:text-foreground" on:click={copyRichText}>Copy as Rich Text</button>
 			</div>
-		</Editor>
+		</RichEditor>
 
 		<Editor 
 			label="Markdown"
@@ -106,6 +109,9 @@
 	</div>
 
 	{#if isLoading}
-		<p class="text-xs text-muted-foreground animate-pulse uppercase tracking-tight">Syncing...</p>
+		<div class="flex items-center gap-2 text-xs text-muted-foreground animate-pulse uppercase tracking-tight">
+			<div class="w-2 h-2 rounded-full bg-primary"></div>
+			Syncing...
+		</div>
 	{/if}
 </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { activeTool, openPalette } from '$lib/stores/palette';
 	import Base64Tool from '$lib/components/Base64Tool.svelte';
 	import URITool from '$lib/components/URITool.svelte';
@@ -11,6 +12,31 @@
 		{ id: 'typography', name: 'Typography', description: 'Bidirectional Google Docs & Markdown', component: TypographyTool },
 		{ id: 'diff', name: 'Text Diff', description: 'Side-by-side comparison', component: DiffTool }
 	];
+
+	onMount(() => {
+		const updateFromHash = () => {
+			const hash = window.location.hash.slice(1);
+			if (hash && tools.some(t => t.id === hash)) {
+				$activeTool = hash as any;
+			} else if (hash === 'all') {
+				$activeTool = 'all';
+			}
+		};
+
+		window.addEventListener('hashchange', updateFromHash);
+		updateFromHash();
+
+		return () => window.removeEventListener('hashchange', updateFromHash);
+	});
+
+	$: {
+		if (typeof window !== 'undefined') {
+			const hash = $activeTool === 'all' ? 'all' : $activeTool;
+			if (window.location.hash.slice(1) !== hash) {
+				window.location.hash = hash;
+			}
+		}
+	}
 </script>
 
 <div class="w-full min-h-screen flex flex-col">

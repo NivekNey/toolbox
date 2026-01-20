@@ -33,10 +33,10 @@ describe('TypographyTool Component', () => {
 
     it('should convert from Plain to Markdown', async () => {
         render(TypographyTool);
-        const plainInput = document.querySelector('[data-testid="plain-editor-textarea"]') as HTMLTextAreaElement;
+        const richInput = document.querySelector('[data-testid="plain-editor-editable"]') as HTMLDivElement;
         const markdownInput = document.querySelector('[data-testid="markdown-editor-textarea"]') as HTMLTextAreaElement;
 
-        await simulateTyping(plainInput, 'Wait for it\u2026');
+        await simulateTyping(richInput, 'Wait for it\u2026');
         await waitForDebounce(200);
 
         expect(markdownInput.value).toBe('Wait for it...');
@@ -44,20 +44,20 @@ describe('TypographyTool Component', () => {
 
     it('should convert from Markdown to Plain', async () => {
         render(TypographyTool);
-        const plainInput = document.querySelector('[data-testid="plain-editor-textarea"]') as HTMLTextAreaElement;
+        const richInput = document.querySelector('[data-testid="plain-editor-editable"]') as HTMLDivElement;
         const markdownInput = document.querySelector('[data-testid="markdown-editor-textarea"]') as HTMLTextAreaElement;
 
         await simulateTyping(markdownInput, '# Title');
         await waitForDebounce(200);
 
-        expect(plainInput.value).toBe('# Title');
+        expect(richInput.innerHTML).toContain('Title');
     });
 
     it('should copy markdown to clipboard', async () => {
         render(TypographyTool);
-        const plainInput = document.querySelector('[data-testid="plain-editor-textarea"]') as HTMLTextAreaElement;
+        const richInput = document.querySelector('[data-testid="plain-editor-editable"]') as HTMLDivElement;
 
-        await simulateTyping(plainInput, 'test');
+        await simulateTyping(richInput, 'test');
         await waitForDebounce(200);
 
         const copyButton = document.querySelector('[data-testid="markdown-editor"] .btn');
@@ -68,7 +68,7 @@ describe('TypographyTool Component', () => {
 
     it('should handle rich text paste', async () => {
         render(TypographyTool);
-        const plainInput = document.querySelector('[data-testid="plain-editor-textarea"]') as HTMLTextAreaElement;
+        const richInput = document.querySelector('[data-testid="plain-editor-editable"]') as HTMLDivElement;
         const markdownInput = document.querySelector('[data-testid="markdown-editor-textarea"]') as HTMLTextAreaElement;
 
         const pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
@@ -80,7 +80,7 @@ describe('TypographyTool Component', () => {
             }
         };
 
-        await fireEvent(plainInput!, pasteEvent);
+        await fireEvent(richInput!, pasteEvent);
         await waitForDebounce(200);
 
         expect(markdownInput.value).toBe('**Bold Text**');

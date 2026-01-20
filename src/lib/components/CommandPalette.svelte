@@ -37,9 +37,16 @@
 		} else if (event.key === 'Enter') {
 			event.preventDefault();
 			if (filteredTools[selectedIndex]) {
-				selectTool(filteredTools[selectedIndex].id);
+				const id = filteredTools[selectedIndex].id;
+				search = '';
+				selectTool(id);
 			}
 		}
+	}
+
+	function handleSelection(id: ToolId) {
+		search = '';
+		selectTool(id);
 	}
 
 	function handleCommandK(event: KeyboardEvent) {
@@ -86,7 +93,7 @@
 				{#each filteredTools as tool, i}
 					<button
 						class="w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors {i === selectedIndex ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-muted-foreground'}"
-						on:click={() => selectTool(tool.id)}
+						on:click={() => handleSelection(tool.id)}
 						on:mouseenter={() => selectedIndex = i}
 						data-testid="palette-item-{tool.id}"
 					>

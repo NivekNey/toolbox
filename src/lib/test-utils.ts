@@ -39,17 +39,28 @@ export const simulateKeyboard = async (
 
 // Helper to simulate typing
 export const simulateTyping = async (
-	element: HTMLInputElement | HTMLTextAreaElement,
+	element: HTMLElement,
 	text: string
 ) => {
 	element.focus();
-	element.value = '';
+
+	const isInput = element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement;
+
+	if (isInput) {
+		(element as HTMLInputElement).value = '';
+	} else {
+		element.innerHTML = '';
+	}
 
 	if (text.length === 0) {
 		element.dispatchEvent(new Event('input', { bubbles: true }));
 	} else {
 		for (const char of text) {
-			element.value += char;
+			if (isInput) {
+				(element as HTMLInputElement).value += char;
+			} else {
+				element.innerHTML += char;
+			}
 			element.dispatchEvent(new Event('input', { bubbles: true }));
 			await waitForDebounce(10);
 		}
