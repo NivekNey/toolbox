@@ -6,7 +6,7 @@
 /**
  * Validates if a string is valid Base64
  */
-function isValidBase64(str: string): boolean {
+export function isValidBase64(str: string): boolean {
 	if (typeof str !== 'string') return false;
 
 	// Empty string is valid

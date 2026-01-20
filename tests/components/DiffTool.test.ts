@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/svelte';
 import { simulateTyping, waitForDebounce } from '../utils/setup';
 import DiffTool from '$lib/components/DiffTool.svelte';
 
 describe('DiffTool Component', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        cleanup();
     });
 
     afterEach(() => {
@@ -14,45 +14,37 @@ describe('DiffTool Component', () => {
 
     it('should render correctly', () => {
         render(DiffTool);
-        expect(document.querySelector('[data-testid="diff-tool"]')).toBeTruthy();
-        expect(document.querySelector('[data-testid="input-old"]')).toBeTruthy();
-        expect(document.querySelector('[data-testid="input-new"]')).toBeTruthy();
+        expect(document.querySelector('[data-testid="diff-text1"]')).toBeTruthy();
+        expect(document.querySelector('[data-testid="diff-text2"]')).toBeTruthy();
     });
 
     it('should compute diff in real-time', async () => {
         render(DiffTool);
-        const inputOld = document.querySelector('[data-testid="input-old"]') as HTMLTextAreaElement;
-        const inputNew = document.querySelector('[data-testid="input-new"]') as HTMLTextAreaElement;
+        const input1 = document.querySelector('[data-testid="diff-text1-textarea"]') as HTMLTextAreaElement;
+        const input2 = document.querySelector('[data-testid="diff-text2-textarea"]') as HTMLTextAreaElement;
 
-        await simulateTyping(inputOld, 'hello world');
-        await simulateTyping(inputNew, 'hello there');
-        await waitForDebounce(200);
+        await simulateTyping(input1, 'hello world');
+        await simulateTyping(input2, 'hello vitest');
+        await waitForDebounce(100);
 
-        const diffContainer = document.querySelector('[data-testid="diff-container"]');
-        expect(diffContainer?.textContent).toContain('hello');
-
-        const removed = document.querySelectorAll('[data-testid="diff-removed"]');
-        const added = document.querySelectorAll('[data-testid="diff-added"]');
-
-        expect(removed.length).toBeGreaterThan(0);
-        expect(added.length).toBeGreaterThan(0);
+        const result = document.querySelector('[data-testid="diff-result"]');
+        expect(result).toBeTruthy();
+        expect(document.querySelector('[data-testid="diff-removed"]')?.textContent).toBe('world');
+        expect(document.querySelector('[data-testid="diff-added"]')?.textContent).toBe('vitest');
     });
 
-    it('should handle clearing inputs', async () => {
+    it('should show "No changes detected" for identical text', async () => {
         render(DiffTool);
-        const inputOld = document.querySelector('[data-testid="input-old"]') as HTMLTextAreaElement;
-        const inputNew = document.querySelector('[data-testid="input-new"]') as HTMLTextAreaElement;
+        const input1 = document.querySelector('[data-testid="diff-text1-textarea"]') as HTMLTextAreaElement;
+        const input2 = document.querySelector('[data-testid="diff-text2-textarea"]') as HTMLTextAreaElement;
 
-        await simulateTyping(inputOld, 'test');
-        await simulateTyping(inputNew, 'test2');
-        await waitForDebounce(200);
+        await simulateTyping(input1, 'hello');
+        await simulateTyping(input2, 'hello');
+        await waitForDebounce(100);
 
-        expect(document.querySelector('[data-testid="diff-container"]')?.textContent).toBeTruthy();
-
-        await simulateTyping(inputOld, '');
-        await simulateTyping(inputNew, '');
-        await waitForDebounce(200);
-
-        expect(document.querySelector('[data-testid="diff-container"]')?.textContent).toContain('No changes detected');
+        const result = document.querySelector('[data-testid="diff-result"]');
+        expect(result?.textContent).toContain('hello');
+        expect(document.querySelector('[data-testid="diff-removed"]')).toBeNull();
+        expect(document.querySelector('[data-testid="diff-added"]')).toBeNull();
     });
 });

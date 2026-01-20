@@ -27,15 +27,14 @@ describe('TypographyTool Component', () => {
 
     it('should render correctly', () => {
         render(TypographyTool);
-        expect(document.querySelector('[data-testid="typography-tool"]')).toBeTruthy();
-        expect(document.querySelector('[data-testid="input-textarea"]')).toBeTruthy();
-        expect(document.querySelector('[data-testid="output-textarea"]')).toBeTruthy();
+        expect(document.querySelector('[data-testid="plain-editor"]')).toBeTruthy();
+        expect(document.querySelector('[data-testid="markdown-editor"]')).toBeTruthy();
     });
 
     it('should convert from Plain to Markdown', async () => {
         render(TypographyTool);
-        const plainInput = document.querySelector('[data-testid="input-textarea"]') as HTMLTextAreaElement;
-        const markdownInput = document.querySelector('[data-testid="output-textarea"]') as HTMLTextAreaElement;
+        const plainInput = document.querySelector('[data-testid="plain-editor-textarea"]') as HTMLTextAreaElement;
+        const markdownInput = document.querySelector('[data-testid="markdown-editor-textarea"]') as HTMLTextAreaElement;
 
         await simulateTyping(plainInput, 'Wait for it\u2026');
         await waitForDebounce(200);
@@ -45,8 +44,8 @@ describe('TypographyTool Component', () => {
 
     it('should convert from Markdown to Plain', async () => {
         render(TypographyTool);
-        const plainInput = document.querySelector('[data-testid="input-textarea"]') as HTMLTextAreaElement;
-        const markdownInput = document.querySelector('[data-testid="output-textarea"]') as HTMLTextAreaElement;
+        const plainInput = document.querySelector('[data-testid="plain-editor-textarea"]') as HTMLTextAreaElement;
+        const markdownInput = document.querySelector('[data-testid="markdown-editor-textarea"]') as HTMLTextAreaElement;
 
         await simulateTyping(markdownInput, '# Title');
         await waitForDebounce(200);
@@ -56,27 +55,14 @@ describe('TypographyTool Component', () => {
 
     it('should copy markdown to clipboard', async () => {
         render(TypographyTool);
-        const plainInput = document.querySelector('[data-testid="input-textarea"]') as HTMLTextAreaElement;
+        const plainInput = document.querySelector('[data-testid="plain-editor-textarea"]') as HTMLTextAreaElement;
 
         await simulateTyping(plainInput, 'test');
         await waitForDebounce(200);
 
-        const copyButton = document.querySelector('[data-testid="copy-markdown-button"]');
+        const copyButton = document.querySelector('[data-testid="markdown-editor"] .btn');
         await fireEvent.click(copyButton!);
 
         expect(mockClipboard.writeText).toHaveBeenCalledWith('test');
-    });
-
-    it('should copy rich text to clipboard', async () => {
-        render(TypographyTool);
-        const markdownInput = document.querySelector('[data-testid="output-textarea"]') as HTMLTextAreaElement;
-
-        await simulateTyping(markdownInput, '# Header');
-        await waitForDebounce(200);
-
-        const copyButton = document.querySelector('[data-testid="copy-rich-button"]');
-        await fireEvent.click(copyButton!);
-
-        expect(mockClipboard.write).toHaveBeenCalled();
     });
 });

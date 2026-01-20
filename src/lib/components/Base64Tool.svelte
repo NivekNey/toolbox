@@ -1,219 +1,91 @@
 <script lang="ts">
-	import { onMount, onDestroy, tick } from 'svelte';
-	import { encodeBase64, decodeBase64 } from '$lib/utils/base64';
+	import { onDestroy } from 'svelte';
+	import { encodeBase64, decodeBase64, isValidBase64 } from '$lib/utils/base64';
+	import Editor from './Editor.svelte';
 
-	let mode: 'encode' | 'decode' = 'encode';
-	let inputValue = '';
-	let outputValue = '';
+	let plainText = '';
+	let base64Text = '';
 	let errorMessage = '';
-	let copyButtonText = 'Copy';
-	let inputLabel = 'Plain Text';
-	let outputLabel = 'Base64';
-	let isLoading = false;
-	let processingTimeout: number | null = null;
+	let isSyncing = false;
+	let syncTimeout: number;
 
-	const DEBOUNCE_MS = 10; 
-
-	function processInput() {
-		if (processingTimeout) {
-			clearTimeout(processingTimeout);
-		}
-
-		if (!inputValue && inputValue !== '') {
-			outputValue = '';
-			errorMessage = '';
-			isLoading = false;
-			return;
-		}
-
-		isLoading = true;
-		
-		const perform = () => {
+	function syncPlainToBase64() {
+		isSyncing = true;
+		clearTimeout(syncTimeout);
+		syncTimeout = window.setTimeout(() => {
 			try {
-				if (inputValue === '') {
-					outputValue = '';
-					errorMessage = '';
-				} else {
-					if (mode === 'encode') {
-						outputValue = encodeBase64(inputValue);
-					} else {
-						outputValue = decodeBase64(inputValue);
-					}
-					errorMessage = '';
-				}
-			} catch (error) {
-				outputValue = '';
-				errorMessage = error instanceof Error ? error.message : 'Invalid input';
+				base64Text = plainText ? encodeBase64(plainText) : '';
+				errorMessage = '';
+			} catch (e) {
+				errorMessage = 'Encoding failed';
 			} finally {
-				isLoading = false;
+				isSyncing = false;
 			}
-		};
-
-		if (DEBOUNCE_MS === 0) {
-			perform();
-		} else {
-			processingTimeout = window.setTimeout(perform, DEBOUNCE_MS);
-		}
+		}, 100);
 	}
 
-	function toggleMode() {
-		mode = mode === 'encode' ? 'decode' : 'encode';
-		
-		const temp = inputValue;
-		inputValue = outputValue;
-		outputValue = temp;
-		
-		updateLabels();
-		clearError();
-		processInput();
+	function syncBase64ToPlain() {
+		isSyncing = true;
+		clearTimeout(syncTimeout);
+		syncTimeout = window.setTimeout(() => {
+			if (!base64Text) {
+				plainText = '';
+				errorMessage = '';
+				isSyncing = false;
+				return;
+			}
+			if (isValidBase64(base64Text)) {
+				try {
+					plainText = decodeBase64(base64Text);
+					errorMessage = '';
+				} catch (e) {
+					errorMessage = 'Decoding failed';
+				}
+			} else {
+				errorMessage = 'Invalid Base64 format';
+			}
+			isSyncing = false;
+		}, 100);
 	}
 
-	function updateLabels() {
-		if (mode === 'encode') {
-			inputLabel = 'Plain Text';
-			outputLabel = 'Base64';
-		} else {
-			inputLabel = 'Base64';
-			outputLabel = 'Plain Text';
-		}
+	async function copyToClipboard(text: string) {
+		if (!text) return;
+		await navigator.clipboard.writeText(text);
 	}
-
-	function clearError() {
-		errorMessage = '';
-	}
-
-	function clearAll() {
-		inputValue = '';
-		outputValue = '';
-		errorMessage = '';
-		isLoading = false;
-	}
-
-	async function copyToClipboard() {
-		if (!outputValue) return;
-
-		try {
-			await navigator.clipboard.writeText(outputValue);
-			copyButtonText = 'Copied!';
-			setTimeout(() => {
-				copyButtonText = 'Copy';
-			}, 1500);
-		} catch (error) {
-			copyButtonText = 'Failed';
-			setTimeout(() => {
-				copyButtonText = 'Copy';
-			}, 1500);
-		}
-	}
-
-	function handleKeydown(event: KeyboardEvent) {
-		if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
-			event.preventDefault();
-			const textarea = event.target as HTMLTextAreaElement;
-			textarea.select();
-		}
-
-		if (event.key === 'Escape') {
-			event.preventDefault();
-			clearAll();
-		}
-	}
-
-	onMount(async () => {
-		isLoading = true; // Set to true to pass the "should show loading state" test
-		await tick();
-		// Focus will be handled by 'autofocus' attribute
-		processInput();
-	});
 
 	onDestroy(() => {
-		if (processingTimeout) {
-			clearTimeout(processingTimeout);
-		}
+		clearTimeout(syncTimeout);
 	});
-
-	$: if (inputValue !== undefined) {
-		processInput();
-	}
 </script>
 
-<div class="card w-full" data-testid="base64-tool">
-	<div class="card-header flex flex-row items-center justify-between">
-		<div>
-			<h3 class="card-title">Base64 Encoder/Decoder</h3>
-			<p class="card-description">Convert text to Base64 and vice versa</p>
-		</div>
-		<div class="flex items-center gap-2">
-			<button 
-				class="btn btn-secondary btn-sm" 
-				on:click={toggleMode}
-				data-testid="mode-toggle"
-				role="button"
-				aria-label="Switch mode"
-			>
-				{mode === 'encode' ? 'Encode' : 'Decode'} Mode
-			</button>
-			<button 
-				class="btn btn-outline btn-sm" 
-				on:click={clearAll}
-				data-testid="clear-button"
-				role="button"
-				aria-label="Clear all content"
-			>
-				Clear
-			</button>
-		</div>
-	</div>
-	
-	<div class="card-content space-y-4">
-		<div class="space-y-2">
-			<label for="base64-input" class="text-sm font-medium" data-testid="input-label">{inputLabel}</label>
-			<textarea
-				id="base64-input"
-				class="textarea w-full min-h-[120px] font-mono"
-				placeholder="Enter text to {mode}..."
-				bind:value={inputValue}
-				on:keydown={handleKeydown}
-				aria-label={inputLabel}
-				data-testid="input-textarea"
-				autofocus
-			></textarea>
-		</div>
+<div class="space-y-6">
+	<div class="grid md:grid-cols-2 gap-6 items-start">
+		<Editor 
+			label="Plain Text"
+			placeholder="Enter plain text..."
+			bind:value={plainText}
+			on:input={syncPlainToBase64}
+			dataTestId="plain-editor"
+		>
+			<div slot="actions">
+				<button class="btn btn-ghost btn-xs text-muted-foreground hover:text-foreground" on:click={() => copyToClipboard(plainText)}>Copy</button>
+			</div>
+		</Editor>
 
-		<div class="space-y-2">
-			<div class="flex items-center justify-between">
-				<label for="base64-output" class="text-sm font-medium" data-testid="output-label">{outputLabel}</label>
-				<button 
-					class="btn btn-ghost btn-xs" 
-					on:click={copyToClipboard}
-					aria-label="Copy to clipboard"
-					data-testid="copy-button"
-					role="button"
-					disabled={!outputValue}
-					class:invisible={!outputValue}
-				>
-					{copyButtonText}
-				</button>
+		<Editor 
+			label="Base64"
+			placeholder="Enter base64 text..."
+			bind:value={base64Text}
+			on:input={syncBase64ToPlain}
+			dataTestId="base64-editor"
+		>
+			<div slot="actions">
+				<button class="btn btn-ghost btn-xs text-muted-foreground hover:text-foreground" on:click={() => copyToClipboard(base64Text)}>Copy</button>
 			</div>
-			<div class="relative">
-				<textarea
-					id="base64-output"
-					class="textarea w-full min-h-[120px] font-mono bg-muted/50"
-					readonly
-					value={outputValue}
-					placeholder="Output will appear here..."
-					aria-label={outputLabel}
-					data-testid="output-textarea"
-				></textarea>
-				{#if isLoading}
-					<div class="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-[1px] rounded-md" data-testid="loading-indicator">
-						<span class="text-xs text-muted-foreground animate-pulse">Processing...</span>
-					</div>
-				{/if}
-			</div>
-			{#if errorMessage}
-				<p class="text-xs text-destructive mt-1" data-testid="error-message">{errorMessage}</p>
-			{/if}
-		</div>
+		</Editor>
 	</div>
+
+	{#if errorMessage}
+		<p class="text-xs text-destructive font-medium uppercase tracking-tight" data-testid="error-message">{errorMessage}</p>
+	{/if}
 </div>

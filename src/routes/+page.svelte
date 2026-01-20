@@ -13,51 +13,55 @@
 	];
 </script>
 
-<div class="w-full px-6 py-8">
-	<header class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-		<div>
-			<h1 class="text-4xl font-bold tracking-tight mb-2">Developer's Toolbox</h1>
-			<p class="text-muted-foreground text-lg">Minimalist, keyboard-first development tools</p>
+<div class="w-full min-h-screen flex flex-col">
+	<header class="border-b px-6 py-3 flex items-center justify-between bg-background/50 backdrop-blur-sm sticky top-0 z-10">
+		<div class="flex items-center gap-4">
+			<button 
+				class="text-lg font-bold tracking-tight hover:text-primary transition-colors"
+				on:click={() => ($activeTool = 'all')}
+			>
+				Toolbox
+			</button>
+			
+			{#if $activeTool !== 'all'}
+				<nav class="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+					<span>/</span>
+					<span class="font-medium text-foreground">{tools.find(t => t.id === $activeTool)?.name}</span>
+				</nav>
+			{/if}
 		</div>
 		
-		<div class="flex items-center gap-4 text-sm text-muted-foreground bg-muted/30 px-4 py-2 rounded-lg border border-border">
-			<span>Press <kbd class="px-2 py-1 text-xs font-mono bg-background border border-border rounded shadow-sm">⌘K</kbd> to switch tools</span>
-			<button class="btn btn-primary btn-xs" on:click={openPalette}>Open Palette</button>
+		<div class="flex items-center gap-6">
+			<div class="hidden md:flex items-center gap-2 text-xs text-muted-foreground select-none">
+				<span>Press <kbd class="px-1.5 py-0.5 rounded border bg-muted font-mono">⌘K</kbd> to search</span>
+			</div>
+			<button class="btn btn-ghost btn-sm text-muted-foreground hover:text-foreground" on:click={openPalette}>
+				Palette
+			</button>
 		</div>
 	</header>
 
-	<main class="grid gap-8">
+	<main class="flex-1 w-full px-6 py-6">
 		{#if $activeTool === 'all'}
-			<div class="grid md:grid-cols-2 gap-6">
-				{#each tools as tool}
-					<button 
-						class="card text-left hover:border-primary/50 transition-colors group"
-						on:click={() => ($activeTool = tool.id)}
-					>
-						<div class="card-header">
-							<h3 class="card-title group-hover:text-primary transition-colors">{tool.name}</h3>
-							<p class="card-description">{tool.description}</p>
-						</div>
-						<div class="card-content">
-							<div class="h-1 bg-muted rounded-full overflow-hidden">
-								<div class="h-full bg-primary/20 w-1/3 group-hover:w-full transition-all duration-500"></div>
-							</div>
-						</div>
-					</button>
-				{/each}
+			<div class="max-w-4xl mx-auto space-y-8 py-12">
+				<div class="text-center space-y-2 mb-12">
+					<h1 class="text-4xl font-bold">Developer's Toolbox</h1>
+					<p class="text-muted-foreground">Minimalist, keyboard-first development tools</p>
+				</div>
+				
+				<div class="grid sm:grid-cols-2 gap-4">
+					{#each tools as tool}
+						<button 
+							class="card p-6 text-left hover:border-primary/50 transition-all hover:shadow-md group"
+							on:click={() => ($activeTool = tool.id)}
+						>
+							<h3 class="text-lg font-semibold group-hover:text-primary transition-colors">{tool.name}</h3>
+							<p class="text-sm text-muted-foreground mt-1">{tool.description}</p>
+						</button>
+					{/each}
+				</div>
 			</div>
 		{:else}
-			<div class="flex items-center gap-2 mb-2">
-				<button 
-					class="btn btn-ghost btn-sm px-0 hover:bg-transparent" 
-					on:click={() => ($activeTool = 'all')}
-				>
-					← Back to Dashboard
-				</button>
-				<span class="text-muted-foreground">/</span>
-				<span class="font-medium">{tools.find(t => t.id === $activeTool)?.name}</span>
-			</div>
-
 			<div class="w-full">
 				{#if $activeTool === 'base64'}
 					<Base64Tool />
