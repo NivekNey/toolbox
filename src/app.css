@@ -22,6 +22,8 @@
 		--destructive-foreground: 0 0% 98%;
 		--success: 142 76% 36%;
 		--success-foreground: 0 0% 98%;
+		--card: 0 0% 100%;
+		--card-foreground: 0 0% 9%;
 		--radius: 0.5rem;
 	}
 
@@ -43,6 +45,8 @@
 		--destructive-foreground: 0 0% 98%;
 		--success: 142 71% 45%;
 		--success-foreground: 0 0% 9%;
+		--card: 0 0% 12%;
+		--card-foreground: 0 0% 98%;
 	}
 
 	* {
