@@ -1,92 +1,72 @@
 <script lang="ts">
-	import { onMount, onDestroy, tick } from 'svelte';
-	import { encodeBase64, decodeBase64 } from '$lib/utils/base64';
+	import { onMount, onDestroy } from 'svelte';
+	import { encodeURI, decodeURI } from '$lib/utils/uri';
 
 	let mode: 'encode' | 'decode' = 'encode';
 	let inputValue = '';
 	let outputValue = '';
 	let errorMessage = '';
 	let copyButtonText = 'Copy';
-	let inputLabel = 'Plain Text';
-	let outputLabel = 'Base64';
+	let inputLabel = 'URL Component / Plain Text';
+	let outputLabel = 'Encoded URI';
 	let isLoading = false;
 	let processingTimeout: number | null = null;
 
-	const DEBOUNCE_MS = 10; 
-
 	function processInput() {
-		if (processingTimeout) {
-			clearTimeout(processingTimeout);
-		}
-
-		if (!inputValue && inputValue !== '') {
+		if (!inputValue) {
 			outputValue = '';
 			errorMessage = '';
-			isLoading = false;
 			return;
 		}
 
 		isLoading = true;
 		
-		const perform = () => {
+		if (processingTimeout) {
+			clearTimeout(processingTimeout);
+		}
+
+		processingTimeout = window.setTimeout(() => {
 			try {
-				if (inputValue === '') {
-					outputValue = '';
-					errorMessage = '';
+				if (mode === 'encode') {
+					outputValue = encodeURI(inputValue);
 				} else {
-					if (mode === 'encode') {
-						outputValue = encodeBase64(inputValue);
-					} else {
-						outputValue = decodeBase64(inputValue);
-					}
-					errorMessage = '';
+					outputValue = decodeURI(inputValue);
 				}
+				errorMessage = '';
 			} catch (error) {
 				outputValue = '';
 				errorMessage = error instanceof Error ? error.message : 'Invalid input';
 			} finally {
 				isLoading = false;
 			}
-		};
-
-		if (DEBOUNCE_MS === 0) {
-			perform();
-		} else {
-			processingTimeout = window.setTimeout(perform, DEBOUNCE_MS);
-		}
+		}, 50);
 	}
 
 	function toggleMode() {
 		mode = mode === 'encode' ? 'decode' : 'encode';
-		
+		// Swap content when switching
 		const temp = inputValue;
 		inputValue = outputValue;
 		outputValue = temp;
 		
 		updateLabels();
-		clearError();
-		processInput();
+		errorMessage = '';
 	}
 
 	function updateLabels() {
 		if (mode === 'encode') {
-			inputLabel = 'Plain Text';
-			outputLabel = 'Base64';
+			inputLabel = 'URL Component / Plain Text';
+			outputLabel = 'Encoded URI';
 		} else {
-			inputLabel = 'Base64';
-			outputLabel = 'Plain Text';
+			inputLabel = 'Encoded URI';
+			outputLabel = 'Decoded Text';
 		}
-	}
-
-	function clearError() {
-		errorMessage = '';
 	}
 
 	function clearAll() {
 		inputValue = '';
 		outputValue = '';
 		errorMessage = '';
-		isLoading = false;
 	}
 
 	async function copyToClipboard() {
@@ -119,11 +99,11 @@
 		}
 	}
 
-	onMount(async () => {
-		isLoading = true; // Set to true to pass the "should show loading state" test
-		await tick();
-		// Focus will be handled by 'autofocus' attribute
-		processInput();
+	onMount(() => {
+		const inputElement = document.querySelector('[data-testid="uri-input-textarea"]') as HTMLTextAreaElement;
+		if (inputElement) {
+			inputElement.focus();
+		}
 	});
 
 	onDestroy(() => {
@@ -132,33 +112,27 @@
 		}
 	});
 
-	$: if (inputValue !== undefined) {
-		processInput();
-	}
+	$: if (inputValue || inputValue === '') processInput();
 </script>
 
-<div class="card w-full" data-testid="base64-tool">
+<div class="card w-full" data-testid="uri-tool">
 	<div class="card-header flex flex-row items-center justify-between">
 		<div>
-			<h3 class="card-title">Base64 Encoder/Decoder</h3>
-			<p class="card-description">Convert text to Base64 and vice versa</p>
+			<h3 class="card-title">URI Encoder/Decoder</h3>
+			<p class="card-description">Encode and decode URL components safely</p>
 		</div>
 		<div class="flex items-center gap-2">
 			<button 
 				class="btn btn-secondary btn-sm" 
 				on:click={toggleMode}
 				data-testid="mode-toggle"
-				role="button"
-				aria-label="Switch mode"
 			>
-				{mode === 'encode' ? 'Encode' : 'Decode'} Mode
+				Switch to {mode === 'encode' ? 'Decode' : 'Encode'}
 			</button>
 			<button 
 				class="btn btn-outline btn-sm" 
 				on:click={clearAll}
 				data-testid="clear-button"
-				role="button"
-				aria-label="Clear all content"
 			>
 				Clear
 			</button>
@@ -167,37 +141,34 @@
 	
 	<div class="card-content space-y-4">
 		<div class="space-y-2">
-			<label for="base64-input" class="text-sm font-medium" data-testid="input-label">{inputLabel}</label>
+			<label for="uri-input" class="text-sm font-medium" data-testid="input-label">{inputLabel}</label>
 			<textarea
-				id="base64-input"
+				id="uri-input"
 				class="textarea w-full min-h-[120px] font-mono"
 				placeholder="Enter text to {mode}..."
 				bind:value={inputValue}
 				on:keydown={handleKeydown}
 				aria-label={inputLabel}
 				data-testid="input-textarea"
-				autofocus
 			></textarea>
 		</div>
 
 		<div class="space-y-2">
 			<div class="flex items-center justify-between">
-				<label for="base64-output" class="text-sm font-medium" data-testid="output-label">{outputLabel}</label>
-				<button 
-					class="btn btn-ghost btn-xs" 
-					on:click={copyToClipboard}
-					aria-label="Copy to clipboard"
-					data-testid="copy-button"
-					role="button"
-					disabled={!outputValue}
-					class:invisible={!outputValue}
-				>
-					{copyButtonText}
-				</button>
+				<label for="uri-output" class="text-sm font-medium" data-testid="output-label">{outputLabel}</label>
+				{#if outputValue}
+					<button 
+						class="btn btn-ghost btn-xs" 
+						on:click={copyToClipboard}
+						data-testid="copy-button"
+					>
+						{copyButtonText}
+					</button>
+				{/if}
 			</div>
 			<div class="relative">
 				<textarea
-					id="base64-output"
+					id="uri-output"
 					class="textarea w-full min-h-[120px] font-mono bg-muted/50"
 					readonly
 					value={outputValue}

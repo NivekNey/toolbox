@@ -45,11 +45,14 @@ export const simulateTyping = async (
 	element.focus();
 	element.value = '';
 
-	// Simulate typing character by character
-	for (const char of text) {
-		element.value += char;
+	if (text.length === 0) {
 		element.dispatchEvent(new Event('input', { bubbles: true }));
-		await waitForDebounce(10);
+	} else {
+		for (const char of text) {
+			element.value += char;
+			element.dispatchEvent(new Event('input', { bubbles: true }));
+			await waitForDebounce(10);
+		}
 	}
 };
 
