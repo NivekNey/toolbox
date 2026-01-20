@@ -29,6 +29,30 @@ describe('Typography Utility', () => {
             expect(googleToMarkdown(input)).toBe(expected);
         });
 
+        it('should convert numbered lists', () => {
+            const input = '1. Item one\n2. Item two';
+            const expected = '1. Item one\n2. Item two';
+            expect(googleToMarkdown(input)).toBe(expected);
+        });
+
+        it('should handle code blocks (backticks)', () => {
+            const input = 'Use the `function()` to start.';
+            const expected = 'Use the `function()` to start.';
+            expect(googleToMarkdown(input)).toBe(expected);
+        });
+
+        it('should convert HTML code tags', () => {
+            const input = '<p>Run <code>npm install</code> to begin.</p>';
+            const expected = 'Run `npm install` to begin.';
+            expect(googleToMarkdown(input)).toBe(expected);
+        });
+
+        it('should handle multi-line code blocks in HTML', () => {
+            const input = '<pre><code>const x = 1;\nconsole.log(x);</code></pre>';
+            const expected = '```\nconst x = 1;\nconsole.log(x);\n```';
+            expect(googleToMarkdown(input)).toBe(expected);
+        });
+
         it('should handle complex mixed content', () => {
             const input = '“Smart quotes” with an em—dash and a list:\n• First item…\n• Second item';
             const expected = '"Smart quotes" with an em--dash and a list:\n- First item...\n- Second item';

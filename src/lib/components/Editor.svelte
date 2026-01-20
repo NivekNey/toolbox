@@ -65,7 +65,7 @@
 		<div class="flex-1 relative">
 			<textarea
 				bind:this={textarea}
-				class="w-full h-full min-h-[400px] border-none bg-transparent py-3 px-4 font-mono text-sm leading-6 resize-none focus:outline-none"
+				class="w-full h-full min-h-[400px] border-none bg-transparent py-3 px-4 font-mono text-sm leading-6 resize-none focus:outline-none text-foreground"
 				{value}
 				{placeholder}
 				{readonly}
@@ -75,6 +75,10 @@
 				on:paste={(e) => dispatch('paste', e)}
 				aria-label={ariaLabel || label}
 				data-testid={`${dataTestId}-textarea`}
+				spellcheck="false"
+				autocorrect="off"
+				autocapitalize="off"
+				autocomplete="off"
 			></textarea>
 		</div>
 	</div>

@@ -36,11 +36,15 @@
 		<div
 			bind:this={editor}
 			contenteditable="true"
-			class="w-full min-h-[400px] py-6 px-12 font-serif text-lg leading-relaxed focus:outline-none prose dark:prose-invert max-w-none"
+			class="w-full min-h-[400px] py-6 px-12 font-serif text-lg leading-relaxed focus:outline-none text-foreground bg-transparent max-w-none"
 			on:input={handleInput}
 			on:paste={handlePaste}
 			data-testid={`${dataTestId}-editable`}
 			aria-label={label}
+			spellcheck="false"
+			autocorrect="off"
+			autocapitalize="off"
+			autocomplete="off"
 		></div>
 		
 		{#if !value}
@@ -57,8 +61,10 @@
 	}
 
 	/* Minimal prose-like styles if Tailwind Typography isn't available */
-	[contenteditable] {
+	:global([contenteditable]), :global([contenteditable] *) {
 		outline: none;
+		color: inherit !important;
+		background-color: transparent !important;
 	}
 
 	[contenteditable] :global(b), [contenteditable] :global(strong) {

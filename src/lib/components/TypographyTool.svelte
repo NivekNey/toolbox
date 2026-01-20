@@ -67,8 +67,11 @@
 		
 		if (html && html.includes('<')) {
 			clipboardEvent.preventDefault();
-			richContent = html;
-			syncRichToMarkdown(html);
+			const sanitizedHtml = html
+				.replace(/color:[^;"]*;?/gi, '')
+				.replace(/background-color:[^;"]*;?/gi, '');
+			richContent = sanitizedHtml;
+			syncRichToMarkdown(sanitizedHtml);
 		} else if (plain) {
 			// If it's just plain text, let the RichEditor handle it normally
 			// or we can manually wrap it if we want to force a sync

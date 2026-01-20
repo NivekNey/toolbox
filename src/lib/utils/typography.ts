@@ -29,6 +29,14 @@ export function googleToMarkdown(input: string): string {
             .replace(/<span[^>]*>(.*?)<\/span>/gi, '$1')
             .replace(/<div[^>]*>(.*?)<\/div>/gi, '$1\n');
 
+        // Code blocks - handle pre/code together
+        markdown = markdown.replace(/<pre[^>]*>\s*<code[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi, (match, code) => {
+            return `\n\`\`\`\n${code.trim()}\n\`\`\`\n\n`;
+        });
+
+        // Inline code
+        markdown = markdown.replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`');
+
         // Headers - handle h1-h6
         markdown = markdown.replace(/<h([1-6])[^>]*>(.*?)<\/h\1>/gi, (match, level, content) => {
             return `\n${'#'.repeat(parseInt(level))} ${content.trim()}\n\n`;
@@ -119,6 +127,12 @@ export function markdownToHtml(input: string): string {
     html = html.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
     html = html.replace(/^##### (.*?)$/gm, '<h5>$1</h5>');
     html = html.replace(/^###### (.*?)$/gm, '<h6>$1</h6>');
+
+    // Code Blocks (Fenced)
+    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+
+    // Inline Code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
 
     // Bold & Italics
     html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>');

@@ -8,8 +8,8 @@ describe('Diff Utility', () => {
             const newText = 'def';
             const diff = computeDiff(oldText, newText);
 
-            expect(diff.filter(p => p.removed)).toHaveLength(1); // Naive impl splits by words/spaces
-            expect(diff.filter(p => p.added)).toHaveLength(1);
+            expect(diff.filter(p => p.type === 'removed')).toHaveLength(1);
+            expect(diff.filter(p => p.type === 'added')).toHaveLength(1);
         });
 
         it('should handle identical strings', () => {
@@ -17,44 +17,67 @@ describe('Diff Utility', () => {
             const diff = computeDiff(text, text);
 
             expect(diff).toHaveLength(1);
-            expect(diff[0]).toEqual({ value: 'hello' });
+            expect(diff[0].type).toBe('unchanged');
+            expect(diff[0].content).toBe('hello');
         });
 
         it('should detect additions', () => {
             const oldText = 'hello';
-            const newText = 'hello world';
+            const newText = 'hello\nworld';
             const diff = computeDiff(oldText, newText);
 
-            expect(diff).toHaveLength(3);
-            expect(diff[0]).toEqual({ value: 'hello' });
-            expect(diff[1]).toEqual({ value: ' ', added: true });
-            expect(diff[2]).toEqual({ value: 'world', added: true });
+            expect(diff).toHaveLength(2);
+            expect(diff[0].type).toBe('unchanged');
+            expect(diff[1].type).toBe('added');
+            expect(diff[1].content).toBe('world');
         });
 
         it('should detect removals', () => {
-            const oldText = 'hello world';
+            const oldText = 'hello\nworld';
             const newText = 'hello';
             const diff = computeDiff(oldText, newText);
 
-            expect(diff).toHaveLength(3);
-            expect(diff[0]).toEqual({ value: 'hello' });
-            expect(diff[1]).toEqual({ value: ' ', removed: true });
-            expect(diff[2]).toEqual({ value: 'world', removed: true });
+            expect(diff).toHaveLength(2);
+            expect(diff[0].type).toBe('unchanged');
+            expect(diff[1].type).toBe('removed');
+            expect(diff[1].content).toBe('world');
         });
 
         it('should handle middle replacements', () => {
-            const oldText = 'hello world !';
-            const newText = 'hello there !';
+            const oldText = 'hello\nworld\n!';
+            const newText = 'hello\nthere\n!';
             const diff = computeDiff(oldText, newText);
 
-            expect(diff.some(p => p.removed && p.value === 'world')).toBe(true);
-            expect(diff.some(p => p.added && p.value === 'there')).toBe(true);
+            expect(diff.some(p => p.type === 'removed' && (p.content as string).includes('world'))).toBe(true);
+            expect(diff.some(p => p.type === 'added' && (p.content as string).includes('there'))).toBe(true);
+        });
+
+        it('should handle character-level changes within words', () => {
+            const oldText = 'developer';
+            const newText = 'developed';
+            const diff = computeDiff(oldText, newText);
+
+            // In line mode, this should be one removed line and one added line
+            expect(diff.filter(p => p.type === 'removed')).toHaveLength(1);
+            expect(diff.filter(p => p.type === 'added')).toHaveLength(1);
         });
 
         it('should handle empty strings', () => {
-            expect(computeDiff('', 'a')).toEqual([{ value: 'a', added: true }]);
-            expect(computeDiff('a', '')).toEqual([{ value: 'a', removed: true }]);
+            expect(computeDiff('', 'a')).toEqual([{ type: 'added', newLineNumber: 1, content: 'a' }]);
+            expect(computeDiff('a', '')).toEqual([{ type: 'removed', oldLineNumber: 1, content: 'a' }]);
             expect(computeDiff('', '')).toEqual([]);
+        });
+
+        it('should perform efficiently on large inputs', () => {
+            const oldText = 'line content '.repeat(10) + '\n'.repeat(100);
+            const newText = 'line content '.repeat(10) + 'changed\n' + '\n'.repeat(100);
+
+            const start = performance.now();
+            const diff = computeDiff(oldText, newText);
+            const end = performance.now();
+
+            expect(end - start).toBeLessThan(500); // LCS can be O(N^2) so we keep test size reasonable
+            expect(diff.length).toBeGreaterThan(0);
         });
     });
 });

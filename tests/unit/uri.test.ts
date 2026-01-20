@@ -176,9 +176,26 @@ describe('URI Encoding/Decoding', () => {
 		});
 
 		it('should preserve protocol and auth', () => {
-			// This test now expects encoding if we use encodeURI, matching modern toolbox needs
 			const authURL = 'https://user:pass@example.com/path';
 			expect(encodeURI(authURL)).toBe('https%3A%2F%2Fuser%3Apass%40example.com%2Fpath');
+		});
+
+		it('should handle mailto and tel URIs', () => {
+			expect(encodeURI('mailto:test@example.com?subject=Hello World')).toBe('mailto%3Atest%40example.com%3Fsubject%3DHello%20World');
+			expect(encodeURI('tel:+1234567890')).toBe('tel%3A%2B1234567890');
+		});
+
+		it('should handle array query strings', () => {
+			const input = 'https://example.com/search?ids[]=1&ids[]=2';
+			const encoded = encodeURI(input);
+			expect(encoded).toContain('ids%5B%5D%3D1');
+			expect(encoded).toContain('ids%5B%5D%3D2');
+			expect(decodeURI(encoded)).toBe(input);
+		});
+
+		it('should handle complex hex and fragments', () => {
+			const input = 'https://example.com/#/dashboard?theme=dark&ref=123';
+			expect(decodeURI(encodeURI(input))).toBe(input);
 		});
 	});
 

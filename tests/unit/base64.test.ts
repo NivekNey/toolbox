@@ -216,5 +216,35 @@ describe('Base64 Encoding/Decoding', () => {
 			const decoded = decodeBase64(encoded);
 			expect(decoded).toBe(testString);
 		});
+
+		it('should handle JSON strings', () => {
+			const json = JSON.stringify({ key: 'value', nested: [1, 2, 3], unicode: '世界' });
+			const encoded = encodeBase64(json);
+			const decoded = decodeBase64(encoded);
+			expect(decoded).toBe(json);
+			expect(JSON.parse(decoded).unicode).toBe('世界');
+		});
+	});
+
+	describe('Base64URL support', () => {
+		it('should handle Base64URL encoding/decoding', () => {
+			const input = 'a?b+c/d'; // characters that change in Base64URL
+			const encoded = encodeBase64(input, { urlSafe: true });
+			expect(encoded).not.toContain('+');
+			expect(encoded).not.toContain('/');
+			expect(encoded).not.toContain('='); // no padding by default in Base64URL
+
+			const decoded = decodeBase64(encoded, { urlSafe: true });
+			expect(decoded).toBe(input);
+		});
+
+		it('should interoperate between formats if requested', () => {
+			const input = 'a?b+c/d';
+			const standard = encodeBase64(input); // aP9iK2MvZA==
+			const urlSafe = encodeBase64(input, { urlSafe: true }); // aP9iK2MvZA
+
+			expect(decodeBase64(standard)).toBe(input);
+			expect(decodeBase64(urlSafe, { urlSafe: true })).toBe(input);
+		});
 	});
 });

@@ -7,6 +7,7 @@
 	let base64Text = '';
 	let errorMessage = '';
 	let isSyncing = false;
+	let urlSafe = false;
 	let syncTimeout: number;
 
 	function handlePlainInput(event: CustomEvent<string>) {
@@ -15,7 +16,7 @@
 		clearTimeout(syncTimeout);
 		syncTimeout = window.setTimeout(() => {
 			try {
-				base64Text = plainText ? encodeBase64(plainText) : '';
+				base64Text = plainText ? encodeBase64(plainText, { urlSafe }) : '';
 				errorMessage = '';
 			} catch (e) {
 				errorMessage = 'Encoding failed';
@@ -36,9 +37,9 @@
 				isSyncing = false;
 				return;
 			}
-			if (isValidBase64(base64Text)) {
+			if (isValidBase64(base64Text, { urlSafe })) {
 				try {
-					plainText = decodeBase64(base64Text);
+					plainText = decodeBase64(base64Text, { urlSafe });
 					errorMessage = '';
 				} catch (e) {
 					errorMessage = 'Decoding failed';
@@ -48,6 +49,14 @@
 			}
 			isSyncing = false;
 		}, 100);
+	}
+
+	function toggleUrlSafe() {
+		urlSafe = !urlSafe;
+		// Re-encode from plain text when toggling
+		if (plainText) {
+			base64Text = encodeBase64(plainText, { urlSafe });
+		}
 	}
 
 	async function copyToClipboard(text: string) {
@@ -61,6 +70,18 @@
 </script>
 
 <div class="space-y-6">
+	<div class="flex items-center gap-4 px-1">
+		<button 
+			class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider transition-colors {urlSafe ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}"
+			on:click={toggleUrlSafe}
+		>
+			<div class="w-8 h-4 rounded-full bg-muted relative transition-colors {urlSafe ? 'bg-primary/20' : ''}">
+				<div class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-background border shadow-sm transition-transform {urlSafe ? 'translate-x-4 border-primary' : ''}"></div>
+			</div>
+			Base64URL Mode
+		</button>
+	</div>
+
 	<div class="grid md:grid-cols-2 gap-6 items-start">
 		<Editor 
 			label="Plain Text"

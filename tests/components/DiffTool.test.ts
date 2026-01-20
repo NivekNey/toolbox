@@ -25,12 +25,13 @@ describe('DiffTool Component', () => {
 
         await simulateTyping(input1, 'hello world');
         await simulateTyping(input2, 'hello vitest');
-        await waitForDebounce(100);
+        await waitForDebounce(200);
 
         const result = document.querySelector('[data-testid="diff-result"]');
         expect(result).toBeTruthy();
-        expect(document.querySelector('[data-testid="diff-removed"]')?.textContent).toBe('world');
-        expect(document.querySelector('[data-testid="diff-added"]')?.textContent).toBe('vitest');
+        // Now it shows lines
+        expect(document.querySelector('[data-testid="diff-removed"]')?.textContent?.trim()).toBe('hello world');
+        expect(document.querySelector('[data-testid="diff-added"]')?.textContent?.trim()).toBe('hello vitest');
     });
 
     it('should show "No changes detected" for identical text', async () => {
