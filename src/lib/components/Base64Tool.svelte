@@ -9,7 +9,8 @@
 	let isSyncing = false;
 	let syncTimeout: number;
 
-	function syncPlainToBase64() {
+	function handlePlainInput(event: CustomEvent<string>) {
+		plainText = event.detail;
 		isSyncing = true;
 		clearTimeout(syncTimeout);
 		syncTimeout = window.setTimeout(() => {
@@ -24,7 +25,8 @@
 		}, 100);
 	}
 
-	function syncBase64ToPlain() {
+	function handleBase64Input(event: CustomEvent<string>) {
+		base64Text = event.detail;
 		isSyncing = true;
 		clearTimeout(syncTimeout);
 		syncTimeout = window.setTimeout(() => {
@@ -64,7 +66,7 @@
 			label="Plain Text"
 			placeholder="Enter plain text..."
 			bind:value={plainText}
-			on:input={syncPlainToBase64}
+			on:input={handlePlainInput}
 			dataTestId="plain-editor"
 		>
 			<div slot="actions">
@@ -76,7 +78,7 @@
 			label="Base64"
 			placeholder="Enter base64 text..."
 			bind:value={base64Text}
-			on:input={syncBase64ToPlain}
+			on:input={handleBase64Input}
 			dataTestId="base64-editor"
 		>
 			<div slot="actions">

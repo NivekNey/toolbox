@@ -72,6 +72,7 @@
 				on:input={handleInput}
 				on:scroll={syncScroll}
 				on:keydown={handleKeydown}
+				on:paste={(e) => dispatch('paste', e)}
 				aria-label={ariaLabel || label}
 				data-testid={`${dataTestId}-textarea`}
 			></textarea>

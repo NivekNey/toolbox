@@ -65,4 +65,24 @@ describe('TypographyTool Component', () => {
 
         expect(mockClipboard.writeText).toHaveBeenCalledWith('test');
     });
+
+    it('should handle rich text paste', async () => {
+        render(TypographyTool);
+        const plainInput = document.querySelector('[data-testid="plain-editor-textarea"]') as HTMLTextAreaElement;
+        const markdownInput = document.querySelector('[data-testid="markdown-editor-textarea"]') as HTMLTextAreaElement;
+
+        const pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
+        (pasteEvent as any).clipboardData = {
+            getData: (type: string) => {
+                if (type === 'text/html') return '<b>Bold Text</b>';
+                if (type === 'text/plain') return 'Bold Text';
+                return '';
+            }
+        };
+
+        await fireEvent(plainInput!, pasteEvent);
+        await waitForDebounce(200);
+
+        expect(markdownInput.value).toBe('**Bold Text**');
+    });
 });

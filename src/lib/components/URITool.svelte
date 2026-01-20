@@ -52,11 +52,13 @@
 		}, 50);
 	}
 
-	function handleRawInput() {
+	function handleRawInput(event: CustomEvent<string>) {
+		rawValue = event.detail;
 		syncRawToEncoded();
 	}
 
-	function handleEncodedInput() {
+	function handleEncodedInput(event: CustomEvent<string>) {
+		encodedValue = event.detail;
 		syncEncodedToRaw();
 	}
 

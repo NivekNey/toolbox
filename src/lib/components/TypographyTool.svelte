@@ -33,11 +33,13 @@
 		}, 100);
 	}
 
-	function handlePlainInput() {
+	function handlePlainInput(event: CustomEvent<string>) {
+		plainText = event.detail;
 		syncPlainToMarkdown(plainText);
 	}
 
-	function handleMarkdownInput() {
+	function handleMarkdownInput(event: CustomEvent<string>) {
+		markdown = event.detail;
 		syncMarkdownToPlain();
 	}
 
@@ -58,12 +60,13 @@
 		}
 	}
 
-	function handlePaste(event: ClipboardEvent) {
-		const html = event.clipboardData?.getData('text/html');
-		const plain = event.clipboardData?.getData('text/plain');
+	function handlePaste(event: CustomEvent<ClipboardEvent> | ClipboardEvent) {
+		const clipboardEvent = 'detail' in event ? event.detail : event;
+		const html = clipboardEvent.clipboardData?.getData('text/html');
+		const plain = clipboardEvent.clipboardData?.getData('text/plain');
 		
 		if (html && html.includes('<')) {
-			event.preventDefault();
+			clipboardEvent.preventDefault();
 			plainText = plain || '';
 			syncPlainToMarkdown(html);
 		}
