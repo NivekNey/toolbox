@@ -20,20 +20,51 @@ export function googleToMarkdown(input: string): string {
     const isHTML = /<[a-z][\s\S]*>/i.test(input);
 
     if (isHTML) {
-        // Basic HTML to Markdown conversion
-        markdown = markdown
-            .replace(/<(b|strong)[^>]*>(.*?)<\/\1>/gi, '**$2**') // Bold
-            .replace(/<(i|em)[^>]*>(.*?)<\/\1>/gi, '*$2*')      // Italics
-            .replace(/<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, '[$2]($1)') // Links
-            .replace(/<li>(.*?)<\/li>/gi, '- $1\n')             // List items
-            .replace(/<(ul|ol)[^>]*>(.*?)<\/\1>/gi, '$2\n')     // Lists
-            .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')          // Paragraphs
-            .replace(/<br\s*\/?>/gi, '\n');                    // Breaks
+        // First, strip unwanted top-level formatting that might wrap blocks
+        // e.g., <b style="font-weight:normal"><h1>...</h1></b>
+        markdown = markdown.replace(/<(b|strong|i|em)[^>]*>\s*(<h[1-6].*?)<\/\1>/gi, '$2');
 
-        // Strip remaining tags
+        // Pre-process spans and style-heavy tags
+        markdown = markdown
+            .replace(/<span[^>]*>(.*?)<\/span>/gi, '$1')
+            .replace(/<div[^>]*>(.*?)<\/div>/gi, '$1\n');
+
+        // Headers - handle h1-h6
+        markdown = markdown.replace(/<h([1-6])[^>]*>(.*?)<\/h\1>/gi, (match, level, content) => {
+            return `\n${'#'.repeat(parseInt(level))} ${content.trim()}\n\n`;
+        });
+
+        // Lists - Handle aria-level for indentation
+        markdown = markdown.replace(/<li[^>]*aria-level="(\d+)"[^>]*>(.*?)<\/li>/gi, (match, level, content) => {
+            const indent = '  '.repeat(parseInt(level) - 1);
+            // Clean up internal p tags often found in Google Docs lists
+            const cleanContent = content.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1').trim();
+            return `${indent}- ${cleanContent}\n`;
+        });
+
+        // Fallback for simple li
+        markdown = markdown.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+
+        // Links
+        markdown = markdown.replace(/<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, '[$2]($1)');
+
+        // Bold and Italics (after block elements are handled)
+        markdown = markdown
+            .replace(/<(b|strong)[^>]*>(.*?)<\/\1>/gi, '**$2**')
+            .replace(/<(i|em)[^>]*>(.*?)<\/\1>/gi, '*$2*');
+
+        // Paragraphs and general blocks
+        markdown = markdown
+            .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+            .replace(/<(ul|ol)[^>]*>(.*?)<\/\1>/gi, '$2\n');
+
+        // Breaks
+        markdown = markdown.replace(/<br\s*\/?>/gi, '\n');
+
+        // Final tag strip
         markdown = markdown.replace(/<[^>]+>/g, '');
 
-        // Decode HTML entities (basic ones)
+        // Decode HTML entities
         markdown = markdown
             .replace(/&nbsp;/g, ' ')
             .replace(/&amp;/g, '&')
@@ -57,8 +88,8 @@ export function googleToMarkdown(input: string): string {
     // Lists (plain text bullets)
     markdown = markdown.replace(/^\u2022\s*/gm, '- ');
 
-    // Multiple spaces
-    markdown = markdown.replace(/ {2,}/g, ' ');
+    // Multiple spaces (only if not at start of line to preserve indentation)
+    markdown = markdown.replace(/([^\n]) {2,}/g, '$1 ');
 
     return markdown.trim().replace(/\n{3,}/g, '\n\n');
 }

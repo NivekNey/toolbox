@@ -7,8 +7,14 @@
 	let copyButtonText = 'Copy';
 	let isLoading = false;
 	let processingTimeout: number | null = null;
+	let skipNextProcess = false;
 
 	function processInput() {
+		if (skipNextProcess) {
+			skipNextProcess = false;
+			return;
+		}
+
 		if (!inputValue) {
 			outputValue = '';
 			return;
@@ -68,12 +74,14 @@
 
 	function handlePaste(event: ClipboardEvent) {
 		const html = event.clipboardData?.getData('text/html');
-		if (html) {
+		const plain = event.clipboardData?.getData('text/plain');
+		
+		if (html && html.includes('<')) {
 			event.preventDefault();
-			// If we have HTML, use it as input so googleToMarkdown can parse it
-			inputValue = html;
+			skipNextProcess = true;
+			inputValue = plain || '';
+			outputValue = googleToMarkdown(html);
 		}
-		// Otherwise let default paste happen (bind:value will pick it up)
 	}
 
 	onMount(() => {
