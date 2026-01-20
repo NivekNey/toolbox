@@ -34,5 +34,12 @@ describe('Typography Utility', () => {
             const expected = '"Smart quotes" with an em--dash and a list:\n- First item...\n- Second item';
             expect(googleToMarkdown(input)).toBe(expected);
         });
+
+        it('should convert HTML formatting (Google Docs paste)', () => {
+            const input = '<p>This is <b>bold</b> and <i>italic</i> with a <a href="https://example.com">link</a>.</p><ul><li>Item 1</li><li>Item 2</li></ul>';
+            // The parser adds newlines for lists and paragraphs
+            const expected = 'This is **bold** and *italic* with a [link](https://example.com).\n\n- Item 1\n- Item 2';
+            expect(googleToMarkdown(input)).toBe(expected);
+        });
     });
 });

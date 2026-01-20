@@ -66,6 +66,16 @@
 		}
 	}
 
+	function handlePaste(event: ClipboardEvent) {
+		const html = event.clipboardData?.getData('text/html');
+		if (html) {
+			event.preventDefault();
+			// If we have HTML, use it as input so googleToMarkdown can parse it
+			inputValue = html;
+		}
+		// Otherwise let default paste happen (bind:value will pick it up)
+	}
+
 	onMount(() => {
 		const inputElement = document.querySelector('[data-testid="typo-input-textarea"]') as HTMLTextAreaElement;
 		if (inputElement) {
@@ -107,6 +117,7 @@
 					placeholder="Paste your text here..."
 					bind:value={inputValue}
 					on:keydown={handleKeydown}
+					on:paste={handlePaste}
 					aria-label="Input (Paste from Google Docs)"
 					data-testid="input-textarea"
 				></textarea>
