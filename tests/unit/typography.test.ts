@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { googleToMarkdown } from '$lib/utils/typography';
+import { googleToMarkdown, markdownToHtml } from '$lib/utils/typography';
 
 describe('Typography Utility', () => {
     describe('googleToMarkdown', () => {
@@ -37,7 +37,6 @@ describe('Typography Utility', () => {
 
         it('should convert HTML formatting (Google Docs paste)', () => {
             const input = '<p>This is <b>bold</b> and <i>italic</i> with a <a href="https://example.com">link</a>.</p><ul><li>Item 1</li><li>Item 2</li></ul>';
-            // The parser adds newlines for lists and paragraphs
             const expected = 'This is **bold** and *italic* with a [link](https://example.com).\n\n- Item 1\n- Item 2';
             expect(googleToMarkdown(input)).toBe(expected);
         });
@@ -56,6 +55,28 @@ describe('Typography Utility', () => {
             expect(converted).toContain('test');
             expect(converted).toContain('- bullet');
             expect(converted).toContain('  - nested');
+        });
+    });
+
+    describe('markdownToHtml', () => {
+        it('should convert headers', () => {
+            expect(markdownToHtml('# Title')).toContain('<h1>Title</h1>');
+            expect(markdownToHtml('## Subtitle')).toContain('<h2>Subtitle</h2>');
+        });
+
+        it('should convert bold and italic', () => {
+            const result = markdownToHtml('**bold** and *italic*');
+            expect(result).toContain('<b>bold</b>');
+            expect(result).toContain('<i>italic</i>');
+        });
+
+        it('should convert links', () => {
+            expect(markdownToHtml('[Link](url)')).toContain('<a href="url">Link</a>');
+        });
+
+        it('should convert lists', () => {
+            const result = markdownToHtml('- Item 1\n- Item 2');
+            expect(result).toContain('<ul><li>Item 1</li><li>Item 2</li></ul>');
         });
     });
 });

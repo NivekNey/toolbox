@@ -1,61 +1,79 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { googleToMarkdown } from '$lib/utils/typography';
+	import { googleToMarkdown, markdownToHtml } from '$lib/utils/typography';
 
-	let inputValue = '';
-	let outputValue = '';
-	let copyButtonText = 'Copy';
+	let plainText = '';
+	let markdown = '';
+	let copyButtonTextMarkdown = 'Copy Markdown';
+	let copyButtonTextRichText = 'Copy as Rich Text';
 	let isLoading = false;
 	let processingTimeout: number | null = null;
-	let skipNextProcess = false;
 
-	function processInput() {
-		if (skipNextProcess) {
-			skipNextProcess = false;
-			return;
-		}
-
-		if (!inputValue) {
-			outputValue = '';
-			return;
-		}
-
+	function syncPlainToMarkdown(source: string) {
 		isLoading = true;
-		
-		if (processingTimeout) {
-			clearTimeout(processingTimeout);
-		}
+		if (processingTimeout) clearTimeout(processingTimeout);
 
 		processingTimeout = window.setTimeout(() => {
 			try {
-				outputValue = googleToMarkdown(inputValue);
+				markdown = googleToMarkdown(source);
 			} catch (error) {
-				outputValue = 'Error: Failed to convert text';
+				// Silent error
 			} finally {
 				isLoading = false;
 			}
 		}, 100);
 	}
 
-	function clearAll() {
-		inputValue = '';
-		outputValue = '';
+	function syncMarkdownToPlain() {
+		isLoading = true;
+		if (processingTimeout) clearTimeout(processingTimeout);
+
+		processingTimeout = window.setTimeout(() => {
+			// Markdown here is treated as the source of truth for the Plain side
+			// We don't actually show HTML on the left, but we keep text in sync
+			plainText = markdown;
+			isLoading = false;
+		}, 100);
 	}
 
-	async function copyToClipboard() {
-		if (!outputValue) return;
+	function handlePlainInput() {
+		syncPlainToMarkdown(plainText);
+	}
 
+	function handleMarkdownInput() {
+		syncMarkdownToPlain();
+	}
+
+	function clearAll() {
+		plainText = '';
+		markdown = '';
+	}
+
+	async function copyMarkdown() {
+		if (!markdown) return;
 		try {
-			await navigator.clipboard.writeText(outputValue);
-			copyButtonText = 'Copied!';
-			setTimeout(() => {
-				copyButtonText = 'Copy';
-			}, 1500);
+			await navigator.clipboard.writeText(markdown);
+			copyButtonTextMarkdown = 'Copied!';
+			setTimeout(() => copyButtonTextMarkdown = 'Copy Markdown', 1500);
 		} catch (error) {
-			copyButtonText = 'Failed';
-			setTimeout(() => {
-				copyButtonText = 'Copy';
-			}, 1500);
+			// Silent error
+		}
+	}
+
+	async function copyRichText() {
+		if (!markdown) return;
+		try {
+			const htmlContent = markdownToHtml(markdown);
+			const blob = new Blob([htmlContent], { type: 'text/html' });
+			const item = new ClipboardItem({ 'text/html': blob });
+			await navigator.clipboard.write([item]);
+			
+			copyButtonTextRichText = 'Copied Rich Text!';
+			setTimeout(() => copyButtonTextRichText = 'Copy as Rich Text', 1500);
+		} catch (error) {
+			console.error('Rich text copy failed:', error);
+			// Fallback to plain text if rich text fails
+			await navigator.clipboard.writeText(plainText);
 		}
 	}
 
@@ -78,9 +96,9 @@
 		
 		if (html && html.includes('<')) {
 			event.preventDefault();
-			skipNextProcess = true;
-			inputValue = plain || '';
-			outputValue = googleToMarkdown(html);
+			plainText = plain || '';
+			// We sync from HTML source for high fidelity
+			syncPlainToMarkdown(html);
 		}
 	}
 
@@ -97,7 +115,6 @@
 		}
 	});
 
-	$: if (inputValue || inputValue === '') processInput();
 </script>
 
 <div class="card w-full" data-testid="typography-tool">
@@ -118,45 +135,58 @@
 	<div class="card-content space-y-4">
 		<div class="grid md:grid-cols-2 gap-4">
 			<div class="space-y-2">
-				<label for="typo-input" class="text-sm font-medium" data-testid="input-label">Input (Paste from Google Docs)</label>
+				<div class="flex items-center justify-between">
+					<label for="typo-plain" class="text-sm font-medium" data-testid="input-label">Plain Text / Google Docs</label>
+					{#if plainText}
+						<button 
+							class="btn btn-ghost btn-xs" 
+							on:click={copyRichText}
+							data-testid="copy-rich-button"
+						>
+							{copyButtonTextRichText}
+						</button>
+					{/if}
+				</div>
 				<textarea
-					id="typo-input"
-					class="textarea w-full min-h-[300px] font-sans"
-					placeholder="Paste your text here..."
-					bind:value={inputValue}
+					id="typo-plain"
+					class="textarea w-full min-h-[400px] font-sans"
+					placeholder="Paste from Google Docs or type here..."
+					bind:value={plainText}
 					on:keydown={handleKeydown}
 					on:paste={handlePaste}
-					aria-label="Input (Paste from Google Docs)"
+					on:input={handlePlainInput}
+					aria-label="Plain Text / Google Docs"
 					data-testid="input-textarea"
 				></textarea>
 			</div>
 
 			<div class="space-y-2">
 				<div class="flex items-center justify-between">
-					<label for="typo-output" class="text-sm font-medium" data-testid="output-label">Markdown Output</label>
-					{#if outputValue}
+					<label for="typo-markdown" class="text-sm font-medium" data-testid="output-label">Markdown</label>
+					{#if markdown}
 						<button 
 							class="btn btn-ghost btn-xs" 
-							on:click={copyToClipboard}
-							data-testid="copy-button"
+							on:click={copyMarkdown}
+							data-testid="copy-markdown-button"
 						>
-							{copyButtonText}
+							{copyButtonTextMarkdown}
 						</button>
 					{/if}
 				</div>
 				<div class="relative h-full">
 					<textarea
-						id="typo-output"
-						class="textarea w-full h-[calc(100%-1.5rem)] min-h-[300px] font-mono bg-muted/50"
-						readonly
-						value={outputValue}
+						id="typo-markdown"
+						class="textarea w-full h-[calc(100%-1.5rem)] min-h-[400px] font-mono bg-muted/30"
+						bind:value={markdown}
+						on:keydown={handleKeydown}
+						on:input={handleMarkdownInput}
 						placeholder="Markdown will appear here..."
-						aria-label="Markdown Output"
+						aria-label="Markdown"
 						data-testid="output-textarea"
 					></textarea>
 					{#if isLoading}
 						<div class="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-[1px] rounded-md" data-testid="loading-indicator">
-							<span class="text-xs text-muted-foreground animate-pulse">Converting...</span>
+							<span class="text-xs text-muted-foreground animate-pulse">Syncing...</span>
 						</div>
 					{/if}
 				</div>

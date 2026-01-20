@@ -7,13 +7,13 @@
 
 	const tools = [
 		{ id: 'base64', name: 'Base64', description: 'Real-time bidirectional conversion', component: Base64Tool },
-		{ id: 'uri', name: 'URI Encoder', description: 'Safe URL component encoding', component: URITool },
-		{ id: 'typography', name: 'Typography', description: 'Google Docs to Markdown', component: TypographyTool },
+		{ id: 'uri', name: 'URI Encoder', description: 'Real-time bidirectional sync', component: URITool },
+		{ id: 'typography', name: 'Typography', description: 'Bidirectional Google Docs & Markdown', component: TypographyTool },
 		{ id: 'diff', name: 'Text Diff', description: 'Side-by-side comparison', component: DiffTool }
 	];
 </script>
 
-<div class="container mx-auto px-4 py-8 max-w-6xl">
+<div class="w-full px-6 py-8">
 	<header class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
 		<div>
 			<h1 class="text-4xl font-bold tracking-tight mb-2">Developer's Toolbox</h1>

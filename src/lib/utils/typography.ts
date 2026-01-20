@@ -95,9 +95,61 @@ export function googleToMarkdown(input: string): string {
 }
 
 /**
- * Converts Markdown to a cleaner Typography format
+ * Converts Markdown to a simple HTML format suitable for Google Docs paste
  */
-export function convertMarkdownToTypography(input: string): string {
-    // For now, this tool is primarily Google Docs -> Markdown
-    return input;
+export function markdownToHtml(input: string): string {
+    if (typeof input !== 'string') {
+        throw new TypeError('Input must be a string');
+    }
+
+    if (input === '') return '';
+
+    let html = input;
+
+    // Escaping basic HTML entities
+    html = html
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // Headers
+    html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+    html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^##### (.*?)$/gm, '<h5>$1</h5>');
+    html = html.replace(/^###### (.*?)$/gm, '<h6>$1</h6>');
+
+    // Bold & Italics
+    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    html = html.replace(/\*(.*?)\*/g, '<i>$1</i>');
+    html = html.replace(/__(.*?)__/g, '<b>$1</b>');
+    html = html.replace(/_(.*?)_/g, '<i>$1</i>');
+
+    // Links
+    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+
+    // Lists (simplified)
+    // First handle internal list items
+    html = html.replace(/^[ ]*- (.*?)$/gm, '<li>$1</li>');
+    // Wrap groups of <li> in <ul> (remove newlines between li to make it more compact)
+    html = html.replace(/((?:<li>.*?<\/li>\s*)+)/gs, (match) => {
+        return `<ul>${match.trim().replace(/\n/g, '')}</ul>`;
+    });
+
+    // Paragraphs - any line that isn't a tag and isn't empty
+    html = html.split('\n').map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return '';
+        if (trimmed.startsWith('<h') || trimmed.startsWith('<ul>') || trimmed.startsWith('</ul>') || trimmed.startsWith('<li>')) {
+            return line;
+        }
+        return `<p>${line}</p>`;
+    }).join('\n');
+
+    // Clean up extra wrapping
+    html = html.replace(/\n{2,}/g, '\n');
+
+    return `<html><body>${html}</body></html>`;
 }
