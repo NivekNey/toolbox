@@ -8,7 +8,11 @@
 		{ id: 'base64', name: 'Base64 Encoder/Decoder', description: 'Real-time bidirectional conversion', shortcut: 'B' },
 		{ id: 'uri', name: 'URI Encoder/Decoder', description: 'Safe URL component encoding', shortcut: 'U' },
 		{ id: 'typography', name: 'Typography Converter', description: 'Google Docs to Markdown', shortcut: 'T' },
-		{ id: 'diff', name: 'Text Diff Tool', description: 'Side-by-side comparison', shortcut: 'D' }
+		{ id: 'diff', name: 'Text Diff Tool', description: 'Side-by-side comparison', shortcut: 'D' },
+		{ id: 'uuid', name: 'UUID Generator', description: 'Bulk secure UUID v4 generation', shortcut: 'I' },
+		{ id: 'timestamp', name: 'Unix Timestamp', description: 'Epoch clock and conversion', shortcut: 'X' },
+		{ id: 'sql', name: 'SQL Formatter', description: 'AST-based structural formatting', shortcut: 'S' },
+		{ id: 'timezone', name: 'Timezone Visualizer', description: 'Visual 48h alignment axis', shortcut: 'Z' }
 	];
 
 	let search = '';

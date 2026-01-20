@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 
-export type ToolId = 'base64' | 'uri' | 'typography' | 'diff' | 'all';
+export type ToolId = 'base64' | 'uri' | 'typography' | 'diff' | 'uuid' | 'timestamp' | 'sql' | 'timezone' | 'all';
 
 export const paletteVisible = writable(false);
 export const activeTool = writable<ToolId>('all');
